@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.strelitzia.dao.IntegralMapper">
+    <resultMap id="BaseResultMap" type="top.strelitzia.model.IntegralInfo">
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="integral" property="integral" jdbcType="INTEGER"/>
+        <result column="group_id" property="groupId" jdbcType="INTEGER"/>
+        <result column="QQ" property="QQ" jdbcType="INTEGER"/>
+        <result column="sign_count" property="signCount" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--  根据姓名查询积分  -->
+    <select id="selectByName" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT
+        integral
+        FROM
+        a_integral
+        WHERE
+        name = #{name}
+    </select>
+
+    <!--  根据QQ查询积分  -->
+    <select id="selectByQQ" resultType="java.lang.Integer">
+        SELECT
+        integral
+        FROM
+        a_integral
+        WHERE
+        QQ = #{QQ,jdbcType=INTEGER}
+    </select>
+
+    <!--  查询前五的积分榜  -->
+    <select id="selectFiveByName" resultMap="BaseResultMap">
+        SELECT
+        *
+        FROM
+        a_integral
+        ORDER BY
+        integral DESC
+        LIMIT 5
+    </select>
+
+    <!-- 更新积分榜  -->
+    <update id="integralByGroupId">
+        INSERT INTO a_integral (group_id, name, QQ, integral)
+        VALUES
+        (#{groupId}, #{name}, #{QQ}, #{integral}) ON CONFLICT(QQ)
+        DO update set
+        integral = #{integral,jdbcType=INTEGER}
+    </update>
+
+    <!--  清空清空本周积分  -->
+    <update id="cleanThisWeek">
+        UPDATE a_integral
+        SET
+        integral = 0
+    </update>
+
+    <!-- 扣除开启活动的积分（10点）  -->
+    <update id="minusTenPointsByGroupId">
+        INSERT INTO a_integral (group_id, QQ)
+        VALUES
+        (#{groupId}, #{QQ}) ON CONFLICT(QQ)
+        DO update set
+        integral = integral - 10
+    </update>
+
+    <!--  插入新qq，若已存在，则更新今日签到次数  -->
+    <update id="updateByQQ">
+        INSERT INTO a_integral (qq, name, sign_count)
+        VALUES
+        (#{qq,jdbcType=VARCHAR}, #{name}, 1)
+        ON CONFLICT(qq)
+        DO update set
+        name = #{name},
+        sign_count = 1
+    </update>
+
+    <!--  根据QQ查询当日签到  -->
+    <select id="selectDayCountByQQ" resultType="java.lang.Integer">
+        SELECT
+        sign_count
+        FROM
+        a_integral
+        WHERE
+        QQ = #{QQ,jdbcType=INTEGER}
+    </select>
+
+    <!--  清空当天签到数量  -->
+    <update id="cleanSignCount">
+        UPDATE a_integral SET sign_count = 0;
+    </update>
+
+    <!--  根据QQ查询积分  -->
+    <select id="selectBySwitch" resultType="java.lang.Integer">
+        SELECT
+        integral
+        FROM
+        a_special_switch
+    </select>
+</mapper>
